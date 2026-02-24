@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ts\CodeMetricsReport\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Ts\CodeMetricsReport\Commands\GenerateCodeMetricsReport;
 
 class CodeMetricsReportServiceProvider extends ServiceProvider
 {
@@ -21,5 +22,11 @@ class CodeMetricsReportServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'code-metrics-report');
 
         $this->loadRoutesFrom(__DIR__ . '/../../routes/web.php');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                GenerateCodeMetricsReport::class,
+            ]);
+        }
     }
 }
