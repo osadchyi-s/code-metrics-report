@@ -1,10 +1,15 @@
-# Code Metrics Report
 
-Livewire package that renders a code metrics report page for Nova/admin users.
+Livewire package that generates and renders a code metrics report page for Nova / admin users.
+
+## Requirements
+
+- PHP ^8.2
+- Laravel ^12.0
+- Livewire ^4.0
 
 ## Installation
 
-Add repository and package in your Laravel app `composer.json`:
+Because this package is distributed via GitHub (not Packagist), add the VCS repository and the version constraint to your `composer.json`:
 
 ```json
 {
@@ -15,50 +20,121 @@ Add repository and package in your Laravel app `composer.json`:
     }
   ],
   "require": {
-    "dmkulyk/code-metrics-report": "dev-main"
+    "dmkulyk/code-metrics-report": "^1.0"
   }
 }
 ```
 
-Then run:
+Then install:
 
 ```bash
 composer update dmkulyk/code-metrics-report
 ```
 
+The service provider is auto-discovered by Laravel — no manual registration required.
+
+## Artisan Command
+
+### `code-metrics:generate`
+
+Scans the `app/` directory, counts lines of code, and writes a JSON report to the configured output path.
+Optionally reads a PHPUnit Clover XML file to include code-coverage data.
+
+```bash
+php artisan code-metrics:generate
+```
+
+**Options**
+
+| Option | Description | Default |
+|---|---|---|
+| `--coverage-xml=` | Path to a PHPUnit Clover XML coverage report | `reports/coverage.xml` |
+| `--output=` | Override the output path for the JSON report | value from config |
+
+**Examples**
+
+```bash
+# Basic run — writes to reports/code-metrics.json
+php artisan code-metrics:generate
+
+# With coverage data
+php artisan code-metrics:generate --coverage-xml=reports/coverage.xml
+
+# Custom output path
+php artisan code-metrics:generate --output=storage/metrics.json
+```
+
+**Typical CI usage (Bitbucket Pipelines)**
+
+```yaml
+- php artisan code-metrics:generate --coverage-xml=reports/coverage.xml
+```
+
+The command reads CI metadata from environment variables automatically (see [Configuration](#configuration)).
+
+### Output format
+
+```json
+{
+  "generated_at": "2026-02-25T12:00:00+00:00",
+  "commit": "abc1234",
+  "branch": "main",
+  "build_number": "42",
+  "summary": {
+    "total_lines": 32741,
+    "code_lines": 23315,
+    "comment_lines": 4171,
+    "blank_lines": 5255,
+    "code_coverage": 84.5
+  },
+  "files": [
+    {
+      "name": "app/Http/Controllers/ExampleController.php",
+      "total_lines": 120,
+      "code_lines": 85,
+      "comment_lines": 20,
+      "blank_lines": 15
+    }
+  ]
+}
+```
+
+`code_coverage` is only present when a valid `--coverage-xml` file is found.
+
 ## Route
 
-The package registers:
+The package registers a read-only view route:
 
-- `GET /code-metrics-report`
+| Method | URI | Name |
+|---|---|---|
+| GET | `/code-metrics-report` | `code-metrics-report` |
 
-Route middleware:
-
-- `nova`
-- `admin`
-
-Route name:
-
-- `code-metrics-report`
+Route middleware applied: `nova`, `admin`.
 
 ## Configuration
 
-The package uses `code_metrics_tool` config key.
+Publish the config if you need to override defaults:
 
-Current defaults:
+```bash
+php artisan vendor:publish --tag=code-metrics-report-config
+```
 
-- `report_path`: `reports/code-metrics.json`
-- `commit`: `BITBUCKET_COMMIT` (or `local`)
-- `branch`: `BITBUCKET_BRANCH` (or `local`)
-- `build_number`: `BITBUCKET_BUILD_NUMBER` (or `0`)
+`config/code_metrics_tool.php`:
 
-## Report Format
+| Key | Env variable | Default |
+|---|---|---|
+| `report_path` | `CODE_METRICS_REPORT_PATH` | `reports/code-metrics.json` |
+| `commit` | `BITBUCKET_COMMIT` | `local` |
+| `branch` | `BITBUCKET_BRANCH` | `local` |
+| `build_number` | `BITBUCKET_BUILD_NUMBER` | `0` |
 
-The report file should be valid JSON. The UI expects keys like:
+## Changelog
 
-- `summary`
-- `files`
-- `generated_at`
+### v1.0.1
+- Added `code-metrics:generate` artisan command with optional Clover XML coverage parsing.
+
+### v1.0.0
+- Initial release: Livewire component and route for rendering a pre-generated metrics JSON report.
 
 ## Notes
 
