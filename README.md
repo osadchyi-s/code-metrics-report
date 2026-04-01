@@ -4,7 +4,7 @@ Livewire package that generates and renders a code metrics report page for Nova 
 ## Requirements
 
 - PHP ^8.2
-- Laravel ^12.0
+- Laravel ^12.0|^13.0
 - Livewire ^4.0
 
 ## Installation
